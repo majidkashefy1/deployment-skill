@@ -1,5 +1,8 @@
 # Server Deployment Skill
 
+![CI](https://github.com/majidkashefy1/deployment-skill/actions/workflows/ci.yml/badge.svg)
+![Release](https://img.shields.io/badge/release-v0.1.2-2d6cdf)
+
 A safe, profile-driven agent skill for deploying applications to servers. It guides an AI agent through **inventorying, bootstrapping, deploying, verifying, and rolling back** applications on approved Debian servers over SSH — without ever touching cloud platforms or pushing code implicitly.
 
 ## What it does
@@ -27,6 +30,7 @@ A safe, profile-driven agent skill for deploying applications to servers. It gui
 ```
 deployment-skill/
 ├── SKILL.md                          # Skill definition loaded by the agent
+├── AGENTS.md                         # Working conventions and verification commands
 ├── deployment-profile.example.yml    # Copy this per project; review every value
 ├── SERVER_ASSESSMENT_PROTOCOL.md     # Connection + diagnostic assessment protocol
 ├── SERVER_CONNECTION_GUIDE.md        # How to connect via SSH/SFTP/RDP, tools & troubleshooting
@@ -116,4 +120,13 @@ Run the test suite (standard library only, no dependencies to install):
 python -m unittest discover -s tests -v
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same suite on Ubuntu and Windows and lints shell scripts with shellcheck.
+The 34 tests cover profile-validation exit codes, `.env` parsing and secret masking, wizard field validators, and `inventory-server.sh` CLI behavior. Shell scripts additionally require:
+
+```bash
+bash -n scripts/inventory-server.sh        # syntax check (Windows: Git-bash)
+shellcheck -x scripts/inventory-server.sh  # lint
+```
+
+CI pins shellcheck **v0.9.0** (see `.github/workflows/ci.yml`) so runner updates cannot silently change lint results; validate against both the 0.9 and 0.10 toolchains locally before pushing, since findings differ between them. See [AGENTS.md](AGENTS.md) for full working conventions, commit style, and the release process.
+
+CI (`.github/workflows/ci.yml`) runs the unittest suite on Ubuntu and Windows plus the pinned shellcheck job on every push.
