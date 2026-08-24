@@ -23,7 +23,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install shellcheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Install shellcheck 0.9.0 (pinned, matches local validation)
+        run: |
+          curl -fsSL https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.linux.x86_64.tar.xz -o /tmp/shellcheck.tar.xz
+          tar -xJf /tmp/shellcheck.tar.xz -C /tmp
+          sudo mv /tmp/shellcheck-v0.9.0/shellcheck /usr/local/bin/shellcheck
+          shellcheck --version
       - name: Lint shell scripts
-        run: shellcheck scripts/inventory-server.sh
+        run: shellcheck -x scripts/inventory-server.sh
