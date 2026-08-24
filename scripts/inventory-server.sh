@@ -155,7 +155,11 @@ else
     printf '%s\n' "- Directory: $project_real"
 
     git_root=$(git -C "$project_dir" rev-parse --show-toplevel 2>/dev/null || true)
-    if [[ -n "$git_root" && "$git_root" == "$project_real" ]]; then
+    git_root_real=""
+    if [[ -n "$git_root" ]]; then
+      git_root_real=$(cd -- "$git_root" 2>/dev/null && pwd -P || true)
+    fi
+    if [[ -n "$git_root_real" && "$git_root_real" == "$project_real" ]]; then
       branch=$(git -C "$project_dir" symbolic-ref --short -q HEAD 2>/dev/null || printf 'detached')
       revision=$(git -C "$project_dir" rev-parse --short HEAD 2>/dev/null || printf 'unknown')
       remote=$(git -C "$project_dir" config --get remote.origin.url 2>/dev/null | head -n 1 | redact_remote || true)
