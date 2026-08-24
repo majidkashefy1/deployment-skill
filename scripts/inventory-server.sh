@@ -137,6 +137,8 @@ elif has_command netstat; then
   netstat -lnt 2>/dev/null || printf '%s\n' 'unavailable'
   printf '%s\n' '```'
 else
+  # Backticks are report wording, not command substitutions.
+  # shellcheck disable=SC2016
   printf '%s\n' '- `ss` and `netstat` are not available.'
 fi
 printf '\n'
@@ -226,7 +228,8 @@ printf '%s\n' '```text'
   container_ids=$(docker ps -aq 2>/dev/null || true)
   if [[ -n "$container_ids" ]]; then
     # Labels identify ownership without exposing environment variables.
-    docker inspect --format '{{.Name}}\t{{index .Config.Labels "com.docker.compose.project"}}\t{{index .Config.Labels "com.docker.compose.service"}}' $container_ids 2>/dev/null | sed 's#^/##' || true
+    mapfile -t container_id_list <<< "$container_ids"
+    docker inspect --format '{{.Name}}\t{{index .Config.Labels "com.docker.compose.project"}}\t{{index .Config.Labels "com.docker.compose.service"}}' "${container_id_list[@]}" 2>/dev/null | sed 's#^/##' || true
   else
     printf '%s\n' 'no containers'
   fi
