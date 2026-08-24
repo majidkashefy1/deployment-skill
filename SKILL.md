@@ -397,6 +397,37 @@ Conflict preflight: passed
 Cloud deployment: disabled
 ```
 
+## Included commands
+
+The `scripts/` directory contains dependency-free commands for profile validation and server inventory. Run them with the project’s selected profile; neither command deploys anything.
+
+### Validate a profile
+
+```bash
+python3 scripts/validate-profile.py --profile deployment-profile.yml
+python3 scripts/validate-profile.py --profile deployment-profile.yml --operation deploy --json
+```
+
+Exit codes:
+
+- `0`: profile is valid (warnings may still be printed).
+- `1`: profile is readable but violates a safety or requiredness rule.
+- `2`: profile is missing, malformed, or cannot be parsed.
+
+The validator supports the conservative YAML subset used by the example profile and rejects duplicate keys, invalid indentation, unsupported inline maps, unsafe literal credential fields, missing conditional settings, non-unique resources, and unsafe rollback policies.
+
+### Inventory a server
+
+Run the inventory script locally on the server or stream it over an already-approved SSH connection:
+
+```bash
+bash scripts/inventory-server.sh --root /opt/projects
+bash scripts/inventory-server.sh --root /opt/projects --project electrical-activity
+ssh deploy@server 'bash -s -- --root /opt/projects' < scripts/inventory-server.sh
+```
+
+The inventory command is read-only by design. It reports host capabilities, sibling project markers, Git metadata, Docker resources, listening ports, systemd services, and reverse-proxy routes. It never installs packages, reads environment-file contents, fetches source, builds images, changes configuration, or restarts services. Use `--output` only when deliberately saving the redacted report.
+
 ## Current-project dry-run profile
 
 When testing this skill against the current repository without server access:
