@@ -31,6 +31,7 @@ deployment-skill/
 ├── SERVER_ASSESSMENT_PROTOCOL.md     # Connection + diagnostic assessment protocol
 ├── SERVER_CONNECTION_GUIDE.md        # How to connect via SSH/SFTP/RDP, tools & troubleshooting
 ├── CONFIG_COLLECTION_WORKFLOW.md     # Interactive CLI vs .env config collection, with code
+├── CHANGELOG.md                      # Notable changes per release tag
 ├── scripts/
 │   ├── validate-profile.py           # Dependency-free profile validator
 │   ├── inventory-server.sh           # Read-only server/project inventory
