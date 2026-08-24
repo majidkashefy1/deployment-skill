@@ -185,12 +185,6 @@ runtime_environment:
   TZ: Asia/Tehran
   DATABASE_URL:
     secret_ref: PRODUCTION_DATABASE_URL
-  NEXT_PUBLIC_SUPABASE_URL:
-    secret_ref: PRODUCTION_SUPABASE_URL
-  NEXT_PUBLIC_SUPABASE_ANON_KEY:
-    secret_ref: PRODUCTION_SUPABASE_ANON_KEY
-  SUPABASE_SERVICE_ROLE_KEY:
-    secret_ref: PRODUCTION_SUPABASE_SERVICE_ROLE_KEY
 
 bootstrap:
   # These settings are only used when operation: bootstrap is explicitly approved.
@@ -275,7 +269,4 @@ secrets:
       when: ssh.authentication_method == ssh-key
     - name: PRODUCTION_SSH_PASSWORD
       when: ssh.authentication_method == password
-  optional:
-    - PRODUCTION_SUPABASE_URL
-    - PRODUCTION_SUPABASE_ANON_KEY
-    - PRODUCTION_SUPABASE_SERVICE_ROLE_KEY
+  optional: []
