@@ -399,7 +399,7 @@ Cloud deployment: disabled
 
 ## Included commands
 
-The `scripts/` directory contains dependency-free commands for profile validation and server inventory. Run them with the project’s selected profile; neither command deploys anything.
+The `scripts/` directory contains dependency-free commands for profile validation, server inventory, and local connection-settings management. Run them with the project’s selected profile; none of these commands deploys anything.
 
 ### Validate a profile
 
@@ -427,6 +427,22 @@ ssh deploy@server 'bash -s -- --root /opt/projects' < scripts/inventory-server.s
 ```
 
 The inventory command is read-only by design. It reports host capabilities, sibling project markers, Git metadata, Docker resources, listening ports, systemd services, and reverse-proxy routes. It never installs packages, reads environment-file contents, fetches source, builds images, changes configuration, or restarts services. Use `--output` only when deliberately saving the redacted report.
+
+For the full connection-establishment and diagnostic procedure, including pass/fail gates between phases, follow `SERVER_ASSESSMENT_PROTOCOL.md`.
+
+### Collect connection settings (local)
+
+Interactive collection of server address, port, username, and password for local tooling. Secrets are hidden on real terminals, every field is validated at entry, the review screen masks the password, and the saved file is restricted to owner-only access:
+
+```bash
+python3 scripts/setup-wizard.py --output .env
+python3 scripts/load-config.py --env-file .env
+python3 scripts/load-config.py --env-file .env --require SERVER_ADDRESS USER_NAME SERVER_PORT
+```
+
+Exit codes for `load-config.py`: `0` valid · `1` missing required keys · `2` file missing or unreadable.
+
+Real `.env` files are git-ignored; only `.env.example` is committed. Values collected this way feed secret stores as references — never paste secret values into profiles, logs, or changelogs. See `CONFIG_COLLECTION_WORKFLOW.md` for the security trade-offs.
 
 ## Current-project dry-run profile
 
