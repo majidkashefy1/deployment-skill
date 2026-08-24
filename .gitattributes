@@ -1,0 +1,9 @@
+# Normalize line endings across platforms.
+* text=auto
+
+# Shell scripts must stay LF or they break when piped to bash over SSH.
+*.sh text eol=lf
+
+# Batch files must stay CRLF for Windows cmd.
+*.bat text eol=crlf
+*.cmd text eol=crlf
