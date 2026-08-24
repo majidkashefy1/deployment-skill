@@ -1,0 +1,281 @@
+# Copy this file to a project-specific deployment-profile.yml and review every value.
+# Values marked null are intentional and must be filled only when the selected
+# stack or operation requires them. Secret values never belong in this file.
+
+schema_version: 1
+
+# inventory | bootstrap | deploy | rollback
+operation: deploy
+# single-project | multi-project
+server_scope: multi-project
+
+project:
+  id: electrical-activity
+  name: Electrical Activity
+  slug: electrical-activity
+  repository: majidkashefy1/electrical-calculator
+  repository_url: https://github.com/majidkashefy1/electrical-calculator.git
+  production_branch: main
+  environment: production
+  owner: null
+  data_classification: internal
+  server_only: true
+  allowed_deployment_targets:
+    - debian-server
+  cloud_deployment_enabled: false
+
+server:
+  projects_root: /opt/projects
+  project_allowlist: []
+  deployment_directory: /opt/projects/electrical-activity
+  release_directory: /opt/projects/electrical-activity/.deployment/releases
+  metadata_directory: /opt/projects/electrical-activity/.deployment
+  backup_directory: /opt/projects/electrical-activity/.deployment/backups
+  operating_system: debian
+  operating_system_version: "13"
+  architecture: amd64
+  timezone: Asia/Tehran
+  container_runtime: docker
+  compose_required: true
+  minimum_free_disk_gb: 10
+  minimum_free_memory_mb: 512
+
+ssh:
+  host_secret_ref: PRODUCTION_SSH_HOST
+  port: 22
+  # Keep this null when the username is supplied by a CI secret.
+  user: null
+  user_secret_ref: PRODUCTION_SSH_USER
+  authentication_method: ssh-key # ssh-key | password | agent
+  private_key_secret_ref: PRODUCTION_SSH_PRIVATE_KEY
+  password_secret_ref: null
+  known_hosts_secret_ref: PRODUCTION_SSH_KNOWN_HOSTS
+  strict_host_key_checking: true
+  connection_timeout_seconds: 20
+  server_alive_interval_seconds: 30
+  server_alive_count_max: 3
+  require_non_root: true
+  sudo_policy: null
+
+stack:
+  type: docker-compose
+  compose_file: docker-compose.yml
+  dockerfile: Dockerfile
+  build_context: .
+  compose_project_name: electrical-activity
+  compose_profiles: []
+  app_service: app
+  migration_service: migrate
+  build_command: docker compose build
+  test_command: npm test
+  lint_command: npm run lint
+  typecheck_command: npm run typecheck
+  migration_command: docker compose run --rm migrate
+  start_command: docker compose up -d --remove-orphans
+  stop_command: null
+  reload_command: null
+  package_manager: npm
+  runtime: node
+  runtime_version: "22"
+  lockfile: package-lock.json
+
+containers:
+  app:
+    image_name: electrical-activity
+    image_registry: null
+    image_tag_strategy: commit-sha
+    container_name: electrical-activity-app
+    service_name: app
+    host_port: 3001
+    container_port: 3000
+    bind_address: 127.0.0.1
+    restart_policy: unless-stopped
+    replicas: 1
+    user: null
+    read_only_filesystem: false
+    cpu_limit: null
+    memory_limit: null
+    network_names:
+      - electrical-activity-network
+    volume_names: []
+    healthcheck:
+      enabled: true
+      internal_url: http://127.0.0.1:3000/electrical-activity/login
+      expected_status_codes: [200, 302, 307]
+      interval_seconds: 10
+      timeout_seconds: 5
+      retries: 12
+      start_period_seconds: 20
+
+  migration:
+    image_name: electrical-activity-migrate
+    container_name: electrical-activity-migrate
+    service_name: migrate
+
+  database:
+    image_name: electrical-activity-db
+    container_name: electrical-activity-db
+    service_name: db
+    volume_name: electrical-activity-postgres
+
+  cache:
+    enabled: true
+    image_name: electrical-activity-cache
+    container_name: electrical-activity-cache
+    service_name: cache
+    volume_name: electrical-activity-redis
+
+  backup:
+    enabled: true
+    image_name: electrical-activity-backup
+    container_name: electrical-activity-backup
+    service_name: backup
+    volume_name: electrical-activity-backups
+
+networking:
+  # A domain is optional for this IP-based example.
+  domain: null
+  ip_access_enabled: true
+  protocol: http
+  public_path: /electrical-activity
+  public_url: null
+  reverse_proxy: nginx
+  reverse_proxy_config_path: /etc/nginx/conf.d/electrical-activity.conf
+  upstream_address: 127.0.0.1:3001
+  preserve_path_prefix: true
+  websocket_enabled: false
+  server_sent_events_enabled: false
+  client_max_body_size: 25m
+  proxy_read_timeout_seconds: 60
+  proxy_connect_timeout_seconds: 10
+  forwarded_prefix: /electrical-activity
+  tls_enabled: false
+  certificate_source: null
+  redirect_http_to_https: false
+  cors_origins: []
+
+storage:
+  database_enabled: true
+  database_type: postgresql
+  database_version: "16"
+  database_url_secret_ref: PRODUCTION_DATABASE_URL
+  database_volume_name: electrical-activity-postgres
+  migration_policy: before-traffic
+  backup_before_migration: true
+  destructive_migrations_require_approval: true
+  seed_command: null
+  cache_enabled: true
+  queue_enabled: false
+  object_storage_enabled: false
+  object_storage_bucket: null
+  backup_enabled: true
+  backup_schedule: daily
+  backup_retention_days: 30
+  restore_command: null
+
+runtime_environment:
+  # These are non-secret values. Application secrets must use secret_ref.
+  APP_ENV: production
+  NODE_ENV: production
+  PORT: "3000"
+  HOSTNAME: 0.0.0.0
+  NEXT_PUBLIC_BASE_PATH: /electrical-activity
+  NEXT_PUBLIC_APP_URL: null
+  LOG_LEVEL: info
+  TZ: Asia/Tehran
+  DATABASE_URL:
+    secret_ref: PRODUCTION_DATABASE_URL
+  NEXT_PUBLIC_SUPABASE_URL:
+    secret_ref: PRODUCTION_SUPABASE_URL
+  NEXT_PUBLIC_SUPABASE_ANON_KEY:
+    secret_ref: PRODUCTION_SUPABASE_ANON_KEY
+  SUPABASE_SERVICE_ROLE_KEY:
+    secret_ref: PRODUCTION_SUPABASE_SERVICE_ROLE_KEY
+
+bootstrap:
+  # These settings are only used when operation: bootstrap is explicitly approved.
+  enabled: false
+  install_docker_if_missing: null
+  install_compose_if_missing: null
+  docker_install_method: null
+  required_os_packages: []
+  create_projects_root: null
+  create_project_directory: null
+  create_release_directory: null
+  create_backup_directory: null
+  directory_owner: null
+  directory_mode: "0750"
+  configure_firewall: false
+  configure_reverse_proxy: false
+  require_confirmation: true
+
+conflict_detection:
+  enabled: true
+  policy: fail-closed
+  inventory_sibling_projects: true
+  check_paths: true
+  check_public_paths: true
+  check_host_ports: true
+  check_container_names: true
+  check_compose_projects: true
+  check_image_names: true
+  check_volume_names: true
+  check_network_names: true
+  check_systemd_units: true
+  check_reverse_proxy_routes: true
+  resource_owner_labels:
+    com.example.project: electrical-activity
+    com.example.environment: production
+  allow_owned_resource_reuse: true
+  unknown_owner_is_conflict: true
+  fail_before_mutation: true
+
+verification:
+  required: true
+  health_url: /electrical-activity/login
+  expected_status_codes: [200, 302, 307]
+  startup_timeout_seconds: 180
+  poll_interval_seconds: 5
+  retry_count: 36
+  verify_public_path: true
+  verify_static_assets: true
+  verify_database: true
+  smoke_test_command: null
+  rollback_on_failed_application_health: true
+  rollback_database_automatically: false
+
+release:
+  build_before_stop: true
+  tag_with_commit_sha: true
+  keep_previous_releases: 3
+  keep_previous_images: 3
+  deployment_lock: /opt/projects/electrical-activity/.deployment/deploy.lock
+  graceful_shutdown_seconds: 30
+  deployment_timeout_seconds: 900
+  cleanup_after_success: true
+  automatic_application_rollback: true
+  automatic_database_rollback: false
+
+notifications:
+  enabled: false
+  provider: null
+  success_channel: null
+  failure_channel: null
+
+# Secret references used by this profile. Values must be configured in the
+# protected CI environment or server secret store, never committed here.
+secrets:
+  required:
+    - PRODUCTION_SSH_HOST
+    - PRODUCTION_SSH_USER
+    - PRODUCTION_SSH_KNOWN_HOSTS
+    - PRODUCTION_DATABASE_URL
+  conditional:
+    - name: PRODUCTION_SSH_PRIVATE_KEY
+      when: ssh.authentication_method == ssh-key
+    - name: PRODUCTION_SSH_PASSWORD
+      when: ssh.authentication_method == password
+  optional:
+    - PRODUCTION_SUPABASE_URL
+    - PRODUCTION_SUPABASE_ANON_KEY
+    - PRODUCTION_SUPABASE_SERVICE_ROLE_KEY
